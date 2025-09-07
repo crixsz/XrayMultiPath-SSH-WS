@@ -72,8 +72,25 @@ EOF
   clear
   sleep 2
   echo -e "Adding default user for SSH-WS..."
-  useradd aku -M -s /bin/false
+  useradd -m -s /bin/bash aku
   echo "aku:aku" | chpasswd
+
+  # Add SSH restrictions for the user
+  cat <<EOF >> /etc/ssh/sshd_config
+
+# Restrict user 'aku'
+Match User aku
+    ForceCommand /bin/false
+    PermitTTY no
+    X11Forwarding no
+    AllowTcpForwarding yes
+    PermitTunnel yes
+    AllowAgentForwarding no
+    AllowStreamLocalForwarding no
+EOF
+
+  # Reload SSH service to apply changes
+  systemctl reload sshd
   echo "SSH-WS installed successfully !!"
   sleep 2
 }
@@ -308,9 +325,9 @@ read -p "Select an option [1-3]: " option
 case $option in
   1)
     prequisites
+    setup_ssh_ws
     acme_install
     setup_nginx
-    setup_ssh_ws
     setup_cf_warp
     ;;
   2)
