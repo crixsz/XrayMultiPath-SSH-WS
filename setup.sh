@@ -46,7 +46,7 @@ setup_ssh_ws(){
   sleep 2
   clear
   echo -e "Configuring SSH-WS..."
-  wget -O /usr/local/bin/websocket/ws-stunnel https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Websocket/ws-stunnel
+  wget --no-cache --no-check-certificate -O /usr/local/bin/websocket/ws-stunnel https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Websocket/ws-stunnel
   chmod +x /usr/local/bin/websocket/ws-stunnel
   sleep 2
   echo -e "Creating systemd service for ws-stunnel..."
@@ -117,7 +117,7 @@ acme_install(){
     echo "Removing existing .acme.sh directory..."
     rm -rf /root/.acme.sh
   fi
-  wget -O acme.sh https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh
+  wget --no-cache --no-check-certificate -O acme.sh https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh
   bash acme.sh --install
   rm acme.sh
   cd "$scr_dir/.acme.sh"
@@ -155,8 +155,8 @@ setup_nginx(){
   echo -e "Configuring Nginx for Xray..."
   rm -rf /etc/nginx/nginx.conf
   sleep 2
-  wget -O /etc/nginx/nginx.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Nginx/nginx.conf
-  wget -O /etc/nginx/conf.d/xray.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Nginx/xray.conf
+  wget --no-cache --no-check-certificate -O /etc/nginx/nginx.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Nginx/nginx.conf
+  wget --no-cache --no-check-certificate -O /etc/nginx/conf.d/xray.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Nginx/xray.conf
   systemctl restart nginx
   nginx_status=$(systemctl is-active nginx)
   if [ "$nginx_status" == "active" ]; then
@@ -171,7 +171,7 @@ setup_nginx(){
 setup_cf_warp(){
   clear
   echo "[Docker Setup]"
-  wget https://raw.githubusercontent.com/crixsz/DockerInstall/main/docker-install.sh && chmod +x docker-install.sh && ./docker-install.sh
+  wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/DockerInstall/main/docker-install.sh && chmod +x docker-install.sh && ./docker-install.sh
   clear
   sleep 2
   if ! command -v docker &> /dev/null; then
@@ -217,9 +217,9 @@ install_xray() {
   sleep 2
   clear 
   #wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xraymulticontroller.sh && mv xraymulticontroller.sh /usr/local/bin/xraymulticontroller && chmod +x /usr/local/bin/xraymulticontroller
-  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/config.json && mv config.json /usr/local/etc/xray/
-  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/none.json && mv none.json /usr/local/etc/xray/
-  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/direct.json && mv direct.json /usr/local/etc/xray/
+  wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/config.json && mv config.json /usr/local/etc/xray/
+  wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/none.json && mv none.json /usr/local/etc/xray/
+  wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/direct.json && mv direct.json /usr/local/etc/xray/
   if [ -f /usr/local/etc/xray/config.json ] && [ -f /usr/local/etc/xray/none.json ]; then
     echo "Successfully configured Xray config"
   else
@@ -233,7 +233,7 @@ install_xray() {
     exit 0
   fi
   rm -rf /etc/systemd/system/xray@.service
-  wget -O /etc/systemd/system/xray@.service https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray@.service
+  wget --no-cache --no-check-certificate -O /etc/systemd/system/xray@.service https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray@.service
   systemctl daemon-reload
   systemctl start xray@none
   systemctl start xray
