@@ -67,7 +67,8 @@ EOF
   systemctl daemon-reload
   systemctl enable ws-stunnel
   systemctl start ws-stunnel
-  echo -e "ws-stunnel service created and started successfully !!"  clear
+  echo -e "ws-stunnel service created and started successfully !!"
+  clear
   sleep 2
   echo -e "Adding default user for SSH-WS..."
   useradd aku -M -s /bin/false
@@ -141,7 +142,8 @@ acme_install(){
     sleep 3
     exit 0
   fi
-}""
+}
+
 setup_nginx(){
   clear
   echo "[Nginx Installation Script]"
@@ -303,7 +305,7 @@ case $option in
     prequisites
     acme_install
     setup_nginx
-    setup_cf_warps
+    setup_cf_warp
     setup_ssh_ws
     ;;
   2)
@@ -319,4 +321,3 @@ case $option in
     echo "Invalid option. Please select a valid option."
     ;;
 esac
-
