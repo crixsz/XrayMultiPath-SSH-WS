@@ -1,4 +1,4 @@
-"""### Functions
+### Functions
 export ip=$(curl -s ipv4.icanhazip.com || curl -s ifconfig.me)
 export scr_dir=$(pwd)
 
