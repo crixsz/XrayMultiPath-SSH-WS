@@ -310,8 +310,8 @@ case $option in
     prequisites
     acme_install
     setup_nginx
-    setup_cf_warp
     setup_ssh_ws
+    setup_cf_warp
     ;;
   2)
     echo "Uninstalling All related files..."
