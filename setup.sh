@@ -206,6 +206,12 @@ EOF
     echo "aku:aku" | chpasswd
     print_success "User 'aku' created with password 'aku'"
 
+    # Remove any existing SSH restrictions for user 'aku' first
+    if [ -f /etc/ssh/sshd_config ]; then
+        sed -i '/# Restrict user.*aku/,/AllowStreamLocalForwarding no/d' /etc/ssh/sshd_config
+        sed -i '/Match User aku/,/AllowStreamLocalForwarding no/d' /etc/ssh/sshd_config
+    fi
+
     # Add SSH restrictions for the user
     cat <<EOF >> /etc/ssh/sshd_config
 
@@ -732,10 +738,20 @@ uninstall_xray(){
     
     print_step "Cleaning SSH configuration"
     if [ -f /etc/ssh/sshd_config ]; then
+        # Remove all SSH restrictions related to user 'aku' using range deletion
+        sed -i '/# Restrict user.*aku/,/AllowStreamLocalForwarding no/d' /etc/ssh/sshd_config
+        sed -i '/Match User aku/,/AllowStreamLocalForwarding no/d' /etc/ssh/sshd_config
+        # Remove any standalone lines that might remain
         sed -i '/AllowUsers.*aku/d' /etc/ssh/sshd_config
         sed -i '/DenyUsers.*aku/d' /etc/ssh/sshd_config
         sed -i '/Match User aku/d' /etc/ssh/sshd_config
-        sed -i '/aku/d' /etc/ssh/sshd_config
+        # Clean up any remaining configuration blocks
+        sed -i '/ForceCommand \/bin\/false/d' /etc/ssh/sshd_config
+        sed -i '/PermitTTY no/d' /etc/ssh/sshd_config
+        sed -i '/AllowTcpForwarding yes/d' /etc/ssh/sshd_config
+        sed -i '/PermitTunnel yes/d' /etc/ssh/sshd_config
+        sed -i '/AllowAgentForwarding no/d' /etc/ssh/sshd_config
+        sed -i '/AllowStreamLocalForwarding no/d' /etc/ssh/sshd_config
         systemctl reload sshd || systemctl restart ssh || true > /dev/null 2>&1
         print_success "SSH configuration cleaned"
     fi
