@@ -46,7 +46,7 @@ setup_ssh_ws(){
   sleep 2
   clear
   echo -e "Configuring SSH-WS..."
-  wget -O /usr/local/bin/websocket/ws-stunnel https://raw.githubusercontent.com/crixsz/XrayMultiPath/main/Websocket/ws-stunnel
+  wget -O /usr/local/bin/websocket/ws-stunnel https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Websocket/ws-stunnel
   chmod +x /usr/local/bin/websocket/ws-stunnel
   sleep 2
   echo -e "Creating systemd service for ws-stunnel..."
@@ -155,8 +155,8 @@ setup_nginx(){
   echo -e "Configuring Nginx for Xray..."
   rm -rf /etc/nginx/nginx.conf
   sleep 2
-  wget -O /etc/nginx/nginx.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath/dual-xray/Nginx/nginx.conf
-  wget -O /etc/nginx/conf.d/xray.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath/dual-xray/Nginx/xray.conf
+  wget -O /etc/nginx/nginx.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Nginx/nginx.conf
+  wget -O /etc/nginx/conf.d/xray.conf https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Nginx/xray.conf
   systemctl restart nginx
   nginx_status=$(systemctl is-active nginx)
   if [ "$nginx_status" == "active" ]; then
@@ -212,10 +212,10 @@ install_xray() {
   echo "Xray Core installed successfully !!"
   sleep 2
   clear 
-  #wget https://raw.githubusercontent.com/crixsz/XrayMultiPath/main/Xray/xraymulticontroller.sh && mv xraymulticontroller.sh /usr/local/bin/xraymulticontroller && chmod +x /usr/local/bin/xraymulticontroller
-  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath/dual-xray/Xray/config.json && mv config.json /usr/local/etc/xray/
-  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath/dual-xray/Xray/none.json && mv none.json /usr/local/etc/xray/
-  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath/dual-xray/Xray/direct.json && mv direct.json /usr/local/etc/xray/
+  #wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xraymulticontroller.sh && mv xraymulticontroller.sh /usr/local/bin/xraymulticontroller && chmod +x /usr/local/bin/xraymulticontroller
+  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/config.json && mv config.json /usr/local/etc/xray/
+  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/none.json && mv none.json /usr/local/etc/xray/
+  wget https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/direct.json && mv direct.json /usr/local/etc/xray/
   if [ -f /usr/local/etc/xray/config.json ] && [ -f /usr/local/etc/xray/none.json ]; then
     echo "Successfully configured Xray config"
   else
@@ -229,7 +229,7 @@ install_xray() {
     exit 0
   fi
   rm -rf /etc/systemd/system/xray@.service
-  wget -O /etc/systemd/system/xray@.service https://raw.githubusercontent.com/crixsz/XrayMultiPath/dual-xray/Xray/xray@.service
+  wget -O /etc/systemd/system/xray@.service https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray@.service
   systemctl daemon-reload
   systemctl start xray@none
   systemctl start xray
