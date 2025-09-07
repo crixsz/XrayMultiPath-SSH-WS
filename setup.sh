@@ -105,8 +105,16 @@ uninstall_ssh_ws(){
   apt-get purge python2.7 -y
   apt-get purge dropbear -y
   systemctl restart dropbear
-  userdel aku
-  clear
+  # Remove user aku if exists
+  userdel -r aku 2>/dev/null || true
+  # Remove SSH restrictions for aku from sshd_config
+  if [ -f /etc/ssh/sshd_config ]; then
+    sed -i '/AllowUsers.*aku/d' /etc/ssh/sshd_config
+    sed -i '/DenyUsers.*aku/d' /etc/ssh/sshd_config
+    sed -i '/Match User aku/d' /etc/ssh/sshd_config
+    sed -i '/aku/d' /etc/ssh/sshd_config
+    systemctl reload sshd || systemctl restart ssh || true
+  fi
   echo "SSH-WS uninstalled successfully !!"
   sleep 3
 }
