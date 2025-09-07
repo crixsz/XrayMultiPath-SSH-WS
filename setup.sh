@@ -46,6 +46,7 @@ setup_ssh_ws(){
   sleep 2
   clear
   echo -e "Configuring SSH-WS..."
+  mkdir -p /usr/local/bin/websocket
   wget --no-cache --no-check-certificate -O /usr/local/bin/websocket/ws-stunnel https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Websocket/ws-stunnel
   chmod +x /usr/local/bin/websocket/ws-stunnel
   sleep 2
