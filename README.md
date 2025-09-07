@@ -35,5 +35,5 @@ vless://5d871382-b2ec-4d82-b5b8-712498a348e5@yourip:80?security=&type=ws&path=/d
 
 # Installation Link
 ```
-wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/setup.sh && chmod +x setup.sh && bash setup.sh
+rm setup && wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/setup.sh && chmod +x setup.sh && bash setup.sh
 ```
