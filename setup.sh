@@ -495,7 +495,7 @@ setup_cf_warp(){
     print_info "Using improved WARP service by aleskxyz"
     
     echo -ne "${CYAN}Pulling WARP container${NC}"
-    if docker run --restart always -d --name=warp -e FAMILIES_MODE=off -p 127.0.0.1:1080:1080 -v /usr/local/warp:/var/lib/cloudflare-warp ghcr.io/aleskxyz/warp-svc:latest > /dev/null 2>&1; then
+    if docker run --restart=always -d --name=warp --device-cgroup-rule='c 10:200 rwm' -p 1080:1080 -e WARP_SLEEP=2 --cap-add=MKNOD --cap-add=AUDIT_WRITE --cap-add=NET_ADMIN --sysctl=net.ipv6.conf.all.disable_ipv6=0 --sysctl=net.ipv4.conf.all.src_valid_mark=1 -v ./data:/var/lib/cloudflare-warp caomingjun/warp > /dev/null 2>&1; then
         echo -e " ${GREEN}✓${NC}"
         print_success "WARP container started successfully"
     else
