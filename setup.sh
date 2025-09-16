@@ -181,7 +181,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python /usr/local/bin/websocket/ws-stunnel
+ExecStart=/usr/bin/python2.7 /usr/local/bin/websocket/ws-stunnel
 Restart=always
 User=root
 
