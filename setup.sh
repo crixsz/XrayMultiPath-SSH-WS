@@ -145,7 +145,11 @@ setup_ssh_ws(){
     print_step "Installing Dropbear SSH Server"
     show_progress 2 "Setting up Dropbear"
     
-    if ! apt install dropbear -y > /dev/null 2>&1; then
+    # Set keyboard layout to US before installing dropbear
+    echo "keyboard-configuration keyboard-configuration/layoutcode string us" | debconf-set-selections
+    echo "keyboard-configuration keyboard-configuration/layout select English (US)" | debconf-set-selections
+    
+    if ! DEBIAN_FRONTEND=noninteractive apt install dropbear -y > /dev/null 2>&1; then
         print_error "Failed to install Dropbear. Exiting..."
         exit 1
     fi
@@ -492,7 +496,6 @@ setup_cf_warp(){
     
     echo
     print_step "Setting up Cloudflare WARP container"
-    print_info "Using improved WARP service by aleskxyz"
     
     echo -ne "${CYAN}Pulling WARP container${NC}"
     if docker run --restart=always -d --name=warp --device-cgroup-rule='c 10:200 rwm' -p 1080:1080 -e WARP_SLEEP=2 --cap-add=MKNOD --cap-add=AUDIT_WRITE --cap-add=NET_ADMIN --sysctl=net.ipv6.conf.all.disable_ipv6=0 --sysctl=net.ipv4.conf.all.src_valid_mark=1 -v ./data:/var/lib/cloudflare-warp caomingjun/warp > /dev/null 2>&1; then
