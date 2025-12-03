@@ -191,3 +191,59 @@ https://github.com/dharak36/Xray-core
 
 ## AWS
 - After testing with AWS EC2 Singapore seems like it throttle the outbound speed, so the max speed that I got when using the cf-warp routing reach max speed of 15MB/s
+
+### STRX VLESS WS HTTPUPGRADE REPLACE SSH WS(UMO NO SUB)
+
+
+#### Config.json
+````json
+{
+      "listen": "0.0.0.0",
+      "port": 800,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "vlessaku",
+            "email": "2022@gmail.com"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "httpupgrade",
+        "httpupgradeSettings": {
+          "path": "/httpupgrade"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
+    }
+````
+
+#### Xray core multipath support
+
+[Dharak36/Xray-core](https://github.com/dharak36/XrayDynamicPath)
+
+#### Nginx
+````nginx
+location /httpupgrade
+{
+        proxy_redirect off;
+        proxy_pass http://127.0.0.1:800;
+        proxy_http_version 1.1;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $http_host;
+
+
+}
+````
