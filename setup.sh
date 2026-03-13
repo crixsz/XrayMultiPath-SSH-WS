@@ -759,12 +759,13 @@ uninstall_xray(){
         print_success "SSH configuration cleaned"
     fi
     
-    print_step "Cleaning Docker containers and images"
+    print_step "Removing WARP Docker container only"
     if command -v docker &> /dev/null; then
-        docker rm -f $(docker ps -a -q) > /dev/null 2>&1 || true
-        docker rmi -f $(docker images -a -q) > /dev/null 2>&1 || true
-        docker system prune -a -f > /dev/null 2>&1 || true
-        print_success "Docker cleaned"
+        if docker rm -f warp > /dev/null 2>&1; then
+            print_success "WARP container removed"
+        else
+            print_info "WARP container not found or already removed"
+        fi
     fi
     
     print_step "Cleaning systemd"
