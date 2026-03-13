@@ -66,6 +66,36 @@
           "path": "/direct-vless"
         }
       }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 900,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "vlessaku",
+            "level": 0,
+            "email": "2022@gmail.com"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "httpupgrade",
+        "security": "none",
+        "httpupgradeSettings": {
+          "path": "/httpupgrade-direct"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
     }
   ],
   "outbounds": [
@@ -116,14 +146,18 @@
         "outboundTag": "blocked"
       },
       {
-        "inboundTag": ["api"],
+        "inboundTag": [
+          "api"
+        ],
         "outboundTag": "api",
         "type": "field"
       },
       {
         "type": "field",
         "outboundTag": "blocked",
-        "protocol": ["bittorrent"]
+        "protocol": [
+          "bittorrent"
+        ]
       },
       {
         "type": "field",
@@ -134,7 +168,9 @@
   },
   "stats": {},
   "api": {
-    "services": ["StatsService"],
+    "services": [
+      "StatsService"
+    ],
     "tag": "api"
   },
   "policy": {

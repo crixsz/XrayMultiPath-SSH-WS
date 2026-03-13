@@ -148,6 +148,36 @@
       }
     },
     {
+      "listen": "127.0.0.1",
+      "port": 800,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "vlessaku",
+            "level": 0,
+            "email": "2022@gmail.com"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "httpupgrade",
+        "security": "none",
+        "httpupgradeSettings": {
+          "path": "/httpupgrade"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
+    },
+    {
       "port": 1310,
       "listen": "127.0.0.1",
       "protocol": "trojan",
