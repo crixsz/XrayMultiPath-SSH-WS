@@ -129,17 +129,17 @@ setup_ssh_ws(){
     print_step "SSH-WS Installation"
     echo
     
-    print_info "Installing Python2.7, Dropbear SSH, and WebSocket services..."
+    print_info "Installing Python3, Dropbear SSH, and WebSocket services..."
     echo
     
-    print_step "Installing Python2.7"
-    show_progress 2 "Downloading and installing Python2.7"
-    
-    if ! apt install python2.7 -y > /dev/null 2>&1; then
-        print_error "Failed to install Python2.7. Exiting..."
+    print_step "Installing Python3"
+    show_progress 2 "Downloading and installing Python3"
+
+    if ! apt install python3 -y > /dev/null 2>&1; then
+        print_error "Failed to install Python3. Exiting..."
         exit 1
     fi
-    print_success "Python2.7 installed successfully"
+    print_success "Python3 installed successfully"
     
     echo
     print_step "Installing Dropbear SSH Server"
@@ -185,7 +185,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python2.7 /usr/local/bin/websocket/ws-stunnel
+ExecStart=/usr/bin/python3 /usr/local/bin/websocket/ws-stunnel
 Restart=always
 User=root
 
