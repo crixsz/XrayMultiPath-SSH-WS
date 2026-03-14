@@ -775,13 +775,45 @@ uninstall_xray(){
         print_success "SSH configuration cleaned"
     fi
     
-    print_step "Removing WARP Docker container only"
+    print_step "Removing WARP Docker completely"
     if command -v docker &> /dev/null; then
-        if docker rm -f warp > /dev/null 2>&1; then
+        local warp_container_found=false
+        local warp_image_ids
+
+        # Stop WARP container if running
+        if docker ps --format '{{.Names}}' | grep -q '^warp$'; then
+            docker stop warp > /dev/null 2>&1 || true
+            print_success "WARP container stopped"
+            warp_container_found=true
+        fi
+
+        # Remove WARP container if present (running or exited)
+        if docker ps -a --format '{{.Names}}' | grep -q '^warp$'; then
+            docker rm -f warp > /dev/null 2>&1 || true
             print_success "WARP container removed"
+            warp_container_found=true
+        fi
+
+        # Remove all local images for caomingjun/warp
+        warp_image_ids=$(docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}' | awk '$1 ~ /^caomingjun\/warp(:|$)/ {print $2}')
+        if [ -n "$warp_image_ids" ]; then
+            docker rmi -f $warp_image_ids > /dev/null 2>&1 || true
+            print_success "WARP image(s) removed"
         else
+            print_info "No WARP images found"
+        fi
+
+        # Remove WARP data directory created by docker bind mount
+        if [ -d "$scr_dir/data" ]; then
+            rm -rf "$scr_dir/data"
+            print_success "WARP data directory removed: $scr_dir/data"
+        fi
+
+        if [ "$warp_container_found" = false ]; then
             print_info "WARP container not found or already removed"
         fi
+    else
+        print_info "Docker not installed, skipping WARP cleanup"
     fi
     
     print_step "Cleaning systemd"
