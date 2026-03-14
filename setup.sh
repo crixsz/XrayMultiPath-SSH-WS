@@ -551,13 +551,22 @@ install_xray() {
         fi
     fi
     
-    print_step "Installing Xray Core v1.5.0"
-    show_progress 3 "Downloading and installing Xray Core"
+    print_step "Installing Dharak custom Xray Core"
+    show_progress 2 "Downloading and installing custom Xray binary"
     
-    if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --version 1.5.0 -u root > /dev/null 2>&1; then
-        print_success "Xray Core v1.5.0 installed successfully"
+    mkdir -p /usr/local/bin
+    if wget --no-cache --no-check-certificate -O /usr/local/bin/xray https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray.linux.64bit > /dev/null 2>&1; then
+        chmod +x /usr/local/bin/xray
+        print_success "Dharak custom Xray Core installed successfully"
     else
-        print_error "Failed to install Xray Core"
+        print_error "Failed to install Dharak custom Xray Core"
+        exit 1
+    fi
+
+    if /usr/local/bin/xray version > /dev/null 2>&1; then
+        print_success "Xray binary is ready"
+    else
+        print_error "Xray binary validation failed"
         exit 1
     fi
     
@@ -566,6 +575,8 @@ install_xray() {
     
     local configs=("config.json" "none.json" "direct.json")
     local base_url="https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray"
+
+    mkdir -p /usr/local/etc/xray /var/log/xray
     
     for config in "${configs[@]}"; do
         echo -ne "${CYAN}Downloading $config${NC}"
@@ -592,14 +603,22 @@ install_xray() {
         exit 1
     fi
     
-    # Setup systemd service
-    rm -rf /etc/systemd/system/xray@.service
-    echo -ne "${CYAN}Downloading Xray service file${NC}"
-    
+    # Setup systemd services
+    rm -rf /etc/systemd/system/xray.service /etc/systemd/system/xray@.service
+
+    echo -ne "${CYAN}Downloading xray.service${NC}"
+    if wget --no-cache --no-check-certificate -O /etc/systemd/system/xray.service https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray.service > /dev/null 2>&1; then
+        echo -e " ${GREEN}✓${NC}"
+    else
+        print_error "Failed to download xray.service"
+        exit 1
+    fi
+
+    echo -ne "${CYAN}Downloading xray@.service${NC}"
     if wget --no-cache --no-check-certificate -O /etc/systemd/system/xray@.service https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray@.service > /dev/null 2>&1; then
         echo -e " ${GREEN}✓${NC}"
     else
-        print_error "Failed to download Xray service file"
+        print_error "Failed to download xray@.service"
         exit 1
     fi
     
@@ -704,12 +723,9 @@ uninstall_xray(){
         echo -e " ${GREEN}✓${NC}"
     done
     
-    print_step "Removing Xray Core"
-    if bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge > /dev/null 2>&1; then
-        print_success "Xray Core removed"
-    else
-        print_warning "Xray Core removal may have failed"
-    fi
+    print_step "Removing Xray Core files"
+    rm -rf /usr/local/bin/xray /usr/local/bin/xray.backup-* /usr/local/share/xray
+    print_success "Xray Core files removed"
     
     print_step "Removing Nginx"
     apt-get purge nginx nginx-common -y > /dev/null 2>&1

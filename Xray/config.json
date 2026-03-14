@@ -21,7 +21,7 @@
         "clients": [
           {
             "id": "b654d3a9-ffaf-42ae-9ace-39aaf74775a2",
-            "flow": "xtls-rprx-direct",
+            "flow": "xtls-rprx-vision",
             "level": 0,
             "email": ""
           }
@@ -51,8 +51,8 @@
       },
       "streamSettings": {
         "network": "tcp",
-        "security": "xtls",
-        "xtlsSettings": {
+        "security": "tls",
+        "tlsSettings": {
           "alpn": ["http/1.1"],
           "certificates": [
             {

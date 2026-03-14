@@ -1,6 +1,6 @@
 # XrayMultiPath with CF-Warp route and Direct route
 
-This script will install Xray Core, Nginx, Docker(with warp container). It will have these default client configs
+This script will install Dharak custom Xray Core, Nginx, Docker(with warp container). It will have these default client configs
 
 VLESS-WS Port 80 (CF Warp)
 
