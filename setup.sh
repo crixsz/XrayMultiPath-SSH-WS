@@ -75,6 +75,32 @@ confirm_action() {
     [[ "$response" =~ ^[Yy]$ ]]
 }
 
+is_pkg_installed() {
+    dpkg -s "$1" > /dev/null 2>&1
+}
+
+download_with_fallback() {
+    local url="$1"
+    local dest="$2"
+    local log_file="$3"
+
+    : > "$log_file"
+
+    if command -v wget > /dev/null 2>&1; then
+        if wget --tries=3 --waitretry=2 --retry-connrefused --timeout=30 --no-check-certificate -O "$dest" "$url" >> "$log_file" 2>&1; then
+            return 0
+        fi
+    fi
+
+    if command -v curl > /dev/null 2>&1; then
+        if curl -fL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 15 --max-time 300 -o "$dest" "$url" >> "$log_file" 2>&1; then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 prerequisites()
 {
     print_banner
@@ -135,11 +161,15 @@ setup_ssh_ws(){
     print_step "Installing Python3"
     show_progress 2 "Downloading and installing Python3"
 
-    if ! apt install python3 -y > /dev/null 2>&1; then
-        print_error "Failed to install Python3. Exiting..."
-        exit 1
+    if is_pkg_installed python3; then
+        print_info "Python3 already installed, skipping package installation"
+    else
+        if ! apt install python3 -y > /dev/null 2>&1; then
+            print_error "Failed to install Python3. Exiting..."
+            exit 1
+        fi
+        print_success "Python3 installed successfully"
     fi
-    print_success "Python3 installed successfully"
     
     echo
     print_step "Installing Dropbear SSH Server"
@@ -149,11 +179,15 @@ setup_ssh_ws(){
     echo "keyboard-configuration keyboard-configuration/layoutcode string us" | debconf-set-selections
     echo "keyboard-configuration keyboard-configuration/layout select English (US)" | debconf-set-selections
     
-    if ! DEBIAN_FRONTEND=noninteractive apt install dropbear -y > /dev/null 2>&1; then
-        print_error "Failed to install Dropbear. Exiting..."
-        exit 1
+    if is_pkg_installed dropbear; then
+        print_info "Dropbear already installed, skipping package installation"
+    else
+        if ! DEBIAN_FRONTEND=noninteractive apt install dropbear -y > /dev/null 2>&1; then
+            print_error "Failed to install Dropbear. Exiting..."
+            exit 1
+        fi
+        print_success "Dropbear installed successfully"
     fi
-    print_success "Dropbear installed successfully"
     
     echo
     print_step "Configuring Dropbear"
@@ -482,22 +516,26 @@ setup_cf_warp(){
     echo
     
     print_step "Installing Docker"
-    echo -ne "${CYAN}Downloading Docker installer${NC}"
-    
-    if wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/DockerInstall/main/docker-install.sh > /dev/null 2>&1; then
-        echo -e " ${GREEN}✓${NC}"
-        chmod +x docker-install.sh
-        
-        print_info "Running Docker installation script..."
-        if ./docker-install.sh > /dev/null 2>&1; then
-            print_success "Docker installed successfully"
+    if command -v docker > /dev/null 2>&1; then
+        print_info "Docker already installed, skipping installation"
+    else
+        echo -ne "${CYAN}Downloading Docker installer${NC}"
+
+        if wget --no-cache --no-check-certificate https://raw.githubusercontent.com/crixsz/DockerInstall/main/docker-install.sh > /dev/null 2>&1; then
+            echo -e " ${GREEN}✓${NC}"
+            chmod +x docker-install.sh
+
+            print_info "Running Docker installation script..."
+            if ./docker-install.sh > /dev/null 2>&1; then
+                print_success "Docker installed successfully"
+            else
+                print_error "Docker installation failed"
+                exit 1
+            fi
         else
-            print_error "Docker installation failed"
+            print_error "Failed to download Docker installer"
             exit 1
         fi
-    else
-        print_error "Failed to download Docker installer"
-        exit 1
     fi
     
     echo
@@ -512,14 +550,27 @@ setup_cf_warp(){
     
     echo
     print_step "Setting up Cloudflare WARP container"
-    
-    echo -ne "${CYAN}Pulling WARP container${NC}"
-    if docker run --restart=always -d --name=warp --device-cgroup-rule='c 10:200 rwm' -p 1080:1080 -e WARP_SLEEP=2 --cap-add=MKNOD --cap-add=AUDIT_WRITE --cap-add=NET_ADMIN --sysctl=net.ipv6.conf.all.disable_ipv6=0 --sysctl=net.ipv4.conf.all.src_valid_mark=1 -v ./data:/var/lib/cloudflare-warp caomingjun/warp > /dev/null 2>&1; then
-        echo -e " ${GREEN}✓${NC}"
-        print_success "WARP container started successfully"
+
+    if docker ps --format '{{.Names}}' | grep -q '^warp$'; then
+        print_info "WARP container already running, skipping creation"
+    elif docker ps -a --format '{{.Names}}' | grep -q '^warp$'; then
+        echo -ne "${CYAN}Starting existing WARP container${NC}"
+        if docker start warp > /dev/null 2>&1; then
+            echo -e " ${GREEN}✓${NC}"
+            print_success "WARP container started successfully"
+        else
+            print_error "Failed to start existing WARP container"
+            exit 1
+        fi
     else
-        print_error "Failed to start WARP container"
-        exit 1
+        echo -ne "${CYAN}Pulling WARP container${NC}"
+        if docker run --restart=always -d --name=warp --device-cgroup-rule='c 10:200 rwm' -p 1080:1080 -e WARP_SLEEP=2 --cap-add=MKNOD --cap-add=AUDIT_WRITE --cap-add=NET_ADMIN --sysctl=net.ipv6.conf.all.disable_ipv6=0 --sysctl=net.ipv4.conf.all.src_valid_mark=1 -v ./data:/var/lib/cloudflare-warp caomingjun/warp > /dev/null 2>&1; then
+            echo -e " ${GREEN}✓${NC}"
+            print_success "WARP container started successfully"
+        else
+            print_error "Failed to start WARP container"
+            exit 1
+        fi
     fi
     
     echo
@@ -555,34 +606,112 @@ install_xray() {
     
     # Check if Xray is already installed
     if [ -f /usr/local/bin/xray ]; then
-        print_warning "Xray Core is already installed!"
-        echo
-        if confirm_action "Do you want to uninstall the current installation?"; then
-            print_info "Uninstalling current Xray Core..."
-            uninstall_xray
-            return 0
+        if /usr/local/bin/xray version > /dev/null 2>&1; then
+            print_warning "Xray Core is already installed!"
+            echo
+            if confirm_action "Do you want to uninstall the current installation?"; then
+                print_info "Uninstalling current Xray Core..."
+                uninstall_xray
+                return 0
+            else
+                print_info "Installation cancelled."
+                exit 0
+            fi
         else
-            print_info "Installation cancelled."
-            exit 0
+            print_warning "Detected invalid existing xray binary. Reinstalling it now."
+            rm -f /usr/local/bin/xray
         fi
+    fi
+
+    local backup_dir
+    local download_log="/tmp/xray-install-download.log"
+    backup_dir=$(mktemp -d /tmp/xray-install-backup.XXXXXX)
+
+    rollback_xray_install() {
+        print_warning "Rolling back Xray installation changes..."
+
+        if [ -f "$backup_dir/xray" ]; then
+            install -m 755 "$backup_dir/xray" /usr/local/bin/xray
+        else
+            rm -f /usr/local/bin/xray
+        fi
+
+        mkdir -p /usr/local/etc/xray
+        for config in config.json none.json direct.json; do
+            if [ -f "$backup_dir/$config" ]; then
+                install -m 644 "$backup_dir/$config" "/usr/local/etc/xray/$config"
+            else
+                rm -f "/usr/local/etc/xray/$config"
+            fi
+        done
+
+        if [ -f "$backup_dir/xray.service" ]; then
+            install -m 644 "$backup_dir/xray.service" /etc/systemd/system/xray.service
+        else
+            rm -f /etc/systemd/system/xray.service
+        fi
+
+        if [ -f "$backup_dir/xray@.service" ]; then
+            install -m 644 "$backup_dir/xray@.service" /etc/systemd/system/xray@.service
+        else
+            rm -f /etc/systemd/system/xray@.service
+        fi
+
+        systemctl daemon-reload > /dev/null 2>&1 || true
+    }
+
+    if [ -f /usr/local/bin/xray ]; then
+        cp -a /usr/local/bin/xray "$backup_dir/xray"
+    fi
+    for config in config.json none.json direct.json; do
+        if [ -f "/usr/local/etc/xray/$config" ]; then
+            cp -a "/usr/local/etc/xray/$config" "$backup_dir/$config"
+        fi
+    done
+    if [ -f /etc/systemd/system/xray.service ]; then
+        cp -a /etc/systemd/system/xray.service "$backup_dir/xray.service"
+    fi
+    if [ -f /etc/systemd/system/xray@.service ]; then
+        cp -a /etc/systemd/system/xray@.service "$backup_dir/xray@.service"
     fi
     
     print_step "Installing Dharak custom Xray Core"
     show_progress 2 "Downloading and installing custom Xray binary"
-    
+
+    local xray_url="https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray.linux.64bit"
+    local tmp_xray
+    tmp_xray=$(mktemp /tmp/xray-binary.XXXXXX)
+
     mkdir -p /usr/local/bin
-    if wget --no-cache --no-check-certificate -O /usr/local/bin/xray https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray.linux.64bit > /dev/null 2>&1; then
-        chmod +x /usr/local/bin/xray
-        print_success "Dharak custom Xray Core installed successfully"
-    else
+
+    if ! download_with_fallback "$xray_url" "$tmp_xray" "$download_log"; then
         print_error "Failed to install Dharak custom Xray Core"
+        print_info "Download log: $download_log"
+        tail -n 5 "$download_log" 2>/dev/null || true
+        rm -f "$tmp_xray"
+        rm -rf "$backup_dir"
         exit 1
     fi
+
+    chmod +x "$tmp_xray"
+    if ! "$tmp_xray" version > /dev/null 2>&1; then
+        print_error "Downloaded Xray binary is invalid"
+        rm -f "$tmp_xray"
+        rollback_xray_install
+        rm -rf "$backup_dir"
+        exit 1
+    fi
+
+    install -m 755 "$tmp_xray" /usr/local/bin/xray
+    rm -f "$tmp_xray"
+    print_success "Dharak custom Xray Core installed successfully"
 
     if /usr/local/bin/xray version > /dev/null 2>&1; then
         print_success "Xray binary is ready"
     else
         print_error "Xray binary validation failed"
+        rollback_xray_install
+        rm -rf "$backup_dir"
         exit 1
     fi
     
@@ -595,12 +724,22 @@ install_xray() {
     mkdir -p /usr/local/etc/xray /var/log/xray
     
     for config in "${configs[@]}"; do
+        local tmp_config
+        tmp_config=$(mktemp "/tmp/${config}.XXXXXX")
         echo -ne "${CYAN}Downloading $config${NC}"
-        if wget --no-cache --no-check-certificate "$base_url/$config" -O "/usr/local/etc/xray/$config" > /dev/null 2>&1; then
+
+        if download_with_fallback "$base_url/$config" "$tmp_config" "$download_log"; then
+            install -m 644 "$tmp_config" "/usr/local/etc/xray/$config"
+            rm -f "$tmp_config"
             echo -e " ${GREEN}✓${NC}"
         else
+            rm -f "$tmp_config"
             echo -e " ${RED}✗${NC}"
             print_error "Failed to download $config"
+            print_info "Download log: $download_log"
+            tail -n 5 "$download_log" 2>/dev/null || true
+            rollback_xray_install
+            rm -rf "$backup_dir"
             exit 1
         fi
     done
@@ -620,21 +759,37 @@ install_xray() {
     fi
     
     # Setup systemd services
-    rm -rf /etc/systemd/system/xray.service /etc/systemd/system/xray@.service
-
     echo -ne "${CYAN}Downloading xray.service${NC}"
-    if wget --no-cache --no-check-certificate -O /etc/systemd/system/xray.service https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray.service > /dev/null 2>&1; then
+    local tmp_xray_service
+    tmp_xray_service=$(mktemp /tmp/xray.service.XXXXXX)
+    if download_with_fallback "https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray.service" "$tmp_xray_service" "$download_log"; then
+        install -m 644 "$tmp_xray_service" /etc/systemd/system/xray.service
+        rm -f "$tmp_xray_service"
         echo -e " ${GREEN}✓${NC}"
     else
+        rm -f "$tmp_xray_service"
         print_error "Failed to download xray.service"
+        print_info "Download log: $download_log"
+        tail -n 5 "$download_log" 2>/dev/null || true
+        rollback_xray_install
+        rm -rf "$backup_dir"
         exit 1
     fi
 
     echo -ne "${CYAN}Downloading xray@.service${NC}"
-    if wget --no-cache --no-check-certificate -O /etc/systemd/system/xray@.service https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray@.service > /dev/null 2>&1; then
+    local tmp_xray_at_service
+    tmp_xray_at_service=$(mktemp /tmp/xray-at.service.XXXXXX)
+    if download_with_fallback "https://raw.githubusercontent.com/crixsz/XrayMultiPath-SSH-WS/main/Xray/xray@.service" "$tmp_xray_at_service" "$download_log"; then
+        install -m 644 "$tmp_xray_at_service" /etc/systemd/system/xray@.service
+        rm -f "$tmp_xray_at_service"
         echo -e " ${GREEN}✓${NC}"
     else
+        rm -f "$tmp_xray_at_service"
         print_error "Failed to download xray@.service"
+        print_info "Download log: $download_log"
+        tail -n 5 "$download_log" 2>/dev/null || true
+        rollback_xray_install
+        rm -rf "$backup_dir"
         exit 1
     fi
     
@@ -668,8 +823,12 @@ install_xray() {
     
     if [ "$all_running" = false ]; then
         print_error "Some Xray services failed to start"
+        rollback_xray_install
+        rm -rf "$backup_dir"
         exit 1
     fi
+
+    rm -rf "$backup_dir"
     
     echo
     print_success "Xray Core installation completed successfully!"
