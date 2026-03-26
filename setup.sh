@@ -157,10 +157,26 @@ setup_ssh_ws(){
     
     echo
     print_step "Configuring Dropbear"
-    sed -i 's/NO_START=1/NO_START=0/' /etc/default/dropbear
-    sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=69/' /etc/default/dropbear
-    systemctl restart dropbear
-    print_success "Dropbear configured to run on port 69"
+    if [ -f /etc/default/dropbear ]; then
+        sed -i 's/^NO_START=.*/NO_START=0/' /etc/default/dropbear
+
+        if grep -q '^DROPBEAR_PORT=' /etc/default/dropbear; then
+            sed -i 's/^DROPBEAR_PORT=.*/DROPBEAR_PORT=69/' /etc/default/dropbear
+        else
+            printf '\nDROPBEAR_PORT=69\n' >> /etc/default/dropbear
+        fi
+    fi
+
+    systemctl enable dropbear > /dev/null 2>&1
+    systemctl restart dropbear > /dev/null 2>&1
+    sleep 1
+
+    if ss -lnt | grep -qE '(^|[[:space:]])LISTEN[[:space:]].*(:|\.)69([[:space:]]|$)'; then
+        print_success "Dropbear configured to run on port 69"
+    else
+        print_error "Dropbear is not listening on port 69"
+        exit 1
+    fi
     
     echo
     print_step "Setting up WebSocket Service"
