@@ -20,10 +20,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.TEST_VPS_SSH_KEY }}
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TEST_VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
       - name: Package deployment files
         run: |
@@ -39,9 +40,10 @@ jobs:
           set -euo pipefail
           PORT="${TEST_VPS_PORT:-22}"
           REMOTE="${TEST_VPS_USER}@${TEST_VPS_HOST}"
+          SSH_KEY="$HOME/.ssh/deploy_key"
 
-          ssh -p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$REMOTE" "mkdir -p /root/.deploy-xray"
-          scp -P "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null deploy.tar.gz "$REMOTE:/root/.deploy-xray/deploy.tar.gz"
+          ssh -i "$SSH_KEY" -p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$REMOTE" "mkdir -p /root/.deploy-xray"
+          scp -i "$SSH_KEY" -P "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null deploy.tar.gz "$REMOTE:/root/.deploy-xray/deploy.tar.gz"
 
       - name: Apply deployment on VPS
         env:
@@ -53,8 +55,9 @@ jobs:
           set -euo pipefail
           PORT="${TEST_VPS_PORT:-22}"
           REMOTE="${TEST_VPS_USER}@${TEST_VPS_HOST}"
+          SSH_KEY="$HOME/.ssh/deploy_key"
 
-          ssh -p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$REMOTE" 'set -euo pipefail; \
+          ssh -i "$SSH_KEY" -p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$REMOTE" 'set -euo pipefail; \
             STAGE="/root/.deploy-xray"; \
             REPO="/root/XrayMultiPath-SSH-WS"; \
             mkdir -p "$REPO"; \
