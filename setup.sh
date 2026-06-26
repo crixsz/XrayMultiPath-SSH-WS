@@ -343,18 +343,22 @@ acme_install(){
     print_step "SSL Certificate Generation"
     echo
     
-    if [ -f /root/xray.crt ] && [ -f /root/xray.key ]; then
-        print_success "SSL certificates already exist!"
-        print_info "Skipping certificate generation..."
-        sleep 2
-        return 0
+    # Load or prompt for domain
+    if [ -f /root/.acme_domain ]; then
+        domain=$(cat /root/.acme_domain)
+        print_info "Domain loaded from config: $domain"
+    elif [ -f /root/xray.crt ] && [ -f /root/xray.key ]; then
+        print_warning "Certs exist but /root/.acme_domain is missing."
+        print_info "Please enter your domain to enable auto-renewal."
+        domain=""
+    else
+        print_info "SSL certificates not found. Generating new certificates..."
+        domain=""
     fi
     
-    print_info "SSL certificates not found. Generating new certificates..."
-    echo
-    
-    # Domain input with validation
-    while true; do
+    # Domain input with validation (only if not loaded from config)
+    while [ -z "$domain" ]; do
+        echo
         echo -e "${YELLOW}Please enter your domain name:${NC}"
         echo -e "${CYAN}Example: yourdomain.com${NC}"
         read -p "$(echo -e "${WHITE}Domain: ${NC}")" domain
@@ -366,11 +370,16 @@ acme_install(){
         
         if [[ ! "$domain" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
             print_error "Invalid domain format. Please enter a valid domain."
+            domain=""
             continue
         fi
         
         break
     done
+    
+    # Save domain for auto-renewal
+    echo "$domain" > /root/.acme_domain
+    print_success "Domain saved to /root/.acme_domain"
     
     echo
     print_step "Setting up Acme.sh certificate manager"
@@ -390,7 +399,7 @@ acme_install(){
     fi
     
     print_step "Installing Acme.sh"
-    bash acme.sh --install > /dev/null 2>&1
+    bash acme.sh --install --no-cron > /dev/null 2>&1
     rm acme.sh
     print_success "Acme.sh installed successfully"
     
@@ -439,6 +448,39 @@ acme_install(){
     else
         print_error "Certificate files not found after installation"
         exit 1
+    fi
+    
+    # Create renewal script
+    print_step "Setting up auto-renewal"
+    cat > /root/renew_certs.sh << 'RENEWEOF'
+#!/bin/bash
+DOMAIN=$(cat /root/.acme_domain 2>/dev/null)
+if [ -z "$DOMAIN" ]; then
+    echo "$(date): No domain found in /root/.acme_domain" >> /root/.acme_renew.log
+    exit 1
+fi
+
+echo "$(date): Starting renewal for $DOMAIN" >> /root/.acme_renew.log
+
+systemctl stop nginx 2>/dev/null
+
+if /root/.acme.sh/acme.sh --renew -d "$DOMAIN" --force >> /root/.acme_renew.log 2>&1; then
+    echo "$(date): Renewal successful" >> /root/.acme_renew.log
+else
+    echo "$(date): Renewal failed" >> /root/.acme_renew.log
+fi
+
+systemctl start nginx 2>/dev/null
+RENEWEOF
+    chmod 755 /root/renew_certs.sh
+    print_success "Renewal script created at /root/renew_certs.sh"
+    
+    # Add monthly cron job (with duplicate guard)
+    if ! crontab -l 2>/dev/null | grep -q "renew_certs.sh"; then
+        (crontab -l 2>/dev/null; echo "0 3 1 * * /root/renew_certs.sh") | crontab -
+        print_success "Monthly renewal cron added (1st of each month at 3am)"
+    else
+        print_info "Renewal cron already exists, skipping"
     fi
 }
 
@@ -889,6 +931,10 @@ uninstall_xray(){
     fi
     
     echo
+    print_step "Removing renewal cron"
+    crontab -l 2>/dev/null | grep -v "renew_certs.sh" | crontab - 2>/dev/null
+    print_success "Renewal cron removed"
+    
     print_step "Stopping Xray services"
     local services=("xray" "xray@none" "xray@direct")
     for service in "${services[@]}"; do
@@ -1005,6 +1051,12 @@ uninstall_xray(){
         "/etc/systemd/system/xray.service.d"
         "/root/docker-install.sh"
         "/usr/local/bin/xray"
+        "/root/.acme_domain"
+        "/root/renew_certs.sh"
+        "/root/.acme.sh"
+        "/root/xray.crt"
+        "/root/xray.key"
+        "/root/.acme_renew.log"
     )
     
     for dir in "${dirs_to_remove[@]}"; do

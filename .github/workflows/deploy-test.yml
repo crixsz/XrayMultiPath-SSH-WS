@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - setup.sh
+      - renew_certs.sh
       - websocket/**
       - Xray/**
       - Nginx/**
@@ -27,7 +28,7 @@ jobs:
       - name: Package deployment files
         run: |
           set -euo pipefail
-          tar czf deploy.tar.gz setup.sh websocket/ws-stunnel Xray/config.json Xray/none.json Xray/direct.json Xray/xray.service Xray/xray@.service Xray/xray.linux.64bit Nginx/xray.conf
+          tar czf deploy.tar.gz setup.sh renew_certs.sh websocket/ws-stunnel Xray/config.json Xray/none.json Xray/direct.json Xray/xray.service Xray/xray@.service Xray/xray.linux.64bit Nginx/xray.conf
 
       - name: Upload package to VPS
         env:
@@ -47,6 +48,7 @@ jobs:
           TEST_VPS_HOST: ${{ secrets.TEST_VPS_HOST }}
           TEST_VPS_USER: ${{ secrets.TEST_VPS_USER }}
           TEST_VPS_PORT: ${{ secrets.TEST_VPS_PORT }}
+          TEST_DOMAIN: ${{ secrets.TEST_DOMAIN }}
         run: |
           set -euo pipefail
           PORT="${TEST_VPS_PORT:-22}"
@@ -66,6 +68,9 @@ jobs:
             if ! cmp -s "$REPO/Xray/xray@.service" /etc/systemd/system/xray@.service 2>/dev/null; then install -m 644 "$REPO/Xray/xray@.service" /etc/systemd/system/xray@.service; xray_changed=1; fi; \
             if ! cmp -s "$REPO/Xray/xray.linux.64bit" /usr/local/bin/xray 2>/dev/null; then tmp_xray=$(mktemp /tmp/xray-deploy.XXXXXX); install -m 755 "$REPO/Xray/xray.linux.64bit" "$tmp_xray"; "$tmp_xray" version >/dev/null 2>&1; install -m 755 "$tmp_xray" /usr/local/bin/xray; rm -f "$tmp_xray"; xray_changed=1; fi; \
             if ! cmp -s "$REPO/Nginx/xray.conf" /etc/nginx/conf.d/xray.conf 2>/dev/null; then install -m 644 "$REPO/Nginx/xray.conf" /etc/nginx/conf.d/xray.conf; nginx_changed=1; fi; \
+            if ! cmp -s "$REPO/renew_certs.sh" /root/renew_certs.sh 2>/dev/null; then install -m 755 "$REPO/renew_certs.sh" /root/renew_certs.sh; fi; \
+            echo "'"$TEST_DOMAIN"'" > /root/.acme_domain; \
+            if ! crontab -l 2>/dev/null | grep -q "renew_certs.sh"; then (crontab -l 2>/dev/null; echo "0 3 1 * * /root/renew_certs.sh") | crontab -; fi; \
             if [ "$xray_changed" -eq 1 ]; then systemctl daemon-reload; systemctl enable xray xray@none xray@direct >/dev/null 2>&1 || true; systemctl restart xray xray@none xray@direct; fi; \
             if [ "$ws_changed" -eq 1 ]; then systemctl restart ws-stunnel; fi; \
             if [ "$nginx_changed" -eq 1 ]; then nginx -t; systemctl reload nginx; fi; \
