@@ -890,24 +890,24 @@ display_connection_info() {
     echo
     echo -e "${YELLOW}┌─ VLESS Connections ─────────────────────────────────────────┐${NC}"
     echo -e "${GREEN}Port 80 (CF Warp):${NC}"
-    echo -e "${WHITE}vless://5d871382-b2ec-4d82-b5b8-712498a348e5@${ip}:80?security=&type=ws&path=/vless-ws&host=${ip}&encryption=none${NC}"
+    echo -e "${WHITE}vless://4c5ac76b-d7e4-4601-b8d3-375ec61d7e10@${ip}:80?security=&type=ws&path=/vless-ws&host=${ip}&encryption=none${NC}"
     echo
     echo -e "${GREEN}Port 443 (CF Warp):${NC}"
-    echo -e "${WHITE}vless://5d871382-b2ec-4d82-b5b8-712498a348e5@${ip}:443?security=tls&sni=bug.com&allowInsecure=1&type=ws&path=/vless-ws&encryption=none${NC}"
+    echo -e "${WHITE}vless://4c5ac76b-d7e4-4601-b8d3-375ec61d7e10@${ip}:443?security=tls&sni=bug.com&allowInsecure=1&type=ws&path=/vless-ws&encryption=none${NC}"
     echo
     echo -e "${GREEN}Port 80 (Direct):${NC}"
-    echo -e "${WHITE}vless://5d871382-b2ec-4d82-b5b8-712498a348e5@${ip}:80?security=&type=ws&path=/direct-vless&host=${ip}&encryption=none${NC}"
+    echo -e "${WHITE}vless://4c5ac76b-d7e4-4601-b8d3-375ec61d7e10@${ip}:80?security=&type=ws&path=/direct-vless&host=${ip}&encryption=none${NC}"
     echo -e "${YELLOW}└─────────────────────────────────────────────────────────────┘${NC}"
     echo
     echo -e "${YELLOW}┌─ TROJAN Connections ────────────────────────────────────────┐${NC}"
     echo -e "${GREEN}Port 80 (CF Warp):${NC}"
-    echo -e "${WHITE}trojan://trojanaku@${ip}:80?security=&type=ws&path=/trojan-ws&host=${ip}${NC}"
+    echo -e "${WHITE}trojan://4c5ac76b-d7e4-4601-b8d3-375ec61d7e10@${ip}:80?security=&type=ws&path=/trojan-ws&host=${ip}${NC}"
     echo
     echo -e "${GREEN}Port 443 (CF Warp):${NC}"
-    echo -e "${WHITE}trojan://trojanaku@${ip}:443?security=tls&sni=bug.com&allowInsecure=1&type=ws&path=/trojan-ws&host=${ip}${NC}"
+    echo -e "${WHITE}trojan://4c5ac76b-d7e4-4601-b8d3-375ec61d7e10@${ip}:443?security=tls&sni=bug.com&allowInsecure=1&type=ws&path=/trojan-ws&host=${ip}${NC}"
     echo
     echo -e "${GREEN}Port 80 (Direct):${NC}"
-    echo -e "${WHITE}trojan://trojanaku@${ip}:80?security=&type=ws&path=/direct&host=${ip}${NC}"
+    echo -e "${WHITE}trojan://4c5ac76b-d7e4-4601-b8d3-375ec61d7e10@${ip}:80?security=&type=ws&path=/direct&host=${ip}${NC}"
     echo -e "${YELLOW}└─────────────────────────────────────────────────────────────┘${NC}"
     echo
     echo -e "${CYAN}💡 Tips:${NC}"

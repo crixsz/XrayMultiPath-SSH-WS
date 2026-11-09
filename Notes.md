@@ -71,13 +71,13 @@
             "settings": {
                 "clients": [
                     {
-                        "password": "b654d3a9-ffaf-42ae-9ace-39aaf74775a2",
+                        "password": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
                         "level": 0,
                         "email": ""
   #trtls
                     },
                     {
-                        "password": "trojanaku",
+                        "password": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
                         "level": 0,
                         "email": "testtrojan"
                     }
@@ -204,7 +204,7 @@ https://github.com/dharak36/Xray-core
       "settings": {
         "clients": [
           {
-            "id": "vlessaku",
+            "id": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
             "email": "2022@gmail.com"
           }
         ],

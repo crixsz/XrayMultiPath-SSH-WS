@@ -21,13 +21,13 @@
       "settings": {
         "clients": [
           {
-            "id": "b654d3a9-ffaf-42ae-9ace-39aaf74775a2",
+            "id": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
             "alterId": 0,
             "level": 0,
             "email": ""
           },
           {
-            "id": "5d871382-b2ec-4d82-b5b8-712498a348e5",
+            "id": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
             "alterId": 0,
             "email": "aku"
           }
@@ -48,12 +48,12 @@
       "settings": {
         "clients": [
           {
-            "id": "5d871382-b2ec-4d82-b5b8-712498a348e5",
+            "id": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
             "level": 0,
             "email": ""
           },
           {
-            "id": "vlessaku",
+            "id": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
             "level": 0,
             "email": ""
           }
@@ -75,12 +75,12 @@
       "settings": {
         "clients": [
           {
-            "password": "b654d3a9-ffaf-42ae-9ace-39aaf74775a2",
+            "password": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
             "level": 0,
             "email": ""
           },
           {
-            "password": "trojanaku",
+            "password": "4c5ac76b-d7e4-4601-b8d3-375ec61d7e10",
             "level": 0,
             "email": ""
           }
